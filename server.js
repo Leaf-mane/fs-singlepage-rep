@@ -32,13 +32,16 @@ const create = async (req, res, targetType) => {
         res.status(400).send('Invalid Target');
         return;
     }
+
     try {
         let query, values;
+
         if (targetType === 'instructors') {
             if ([entry.instructor_name, entry.specialization].includes(undefined)) {
                 res.status(400).send('Bad Request.');
                 return;
             }
+
             query = 'INSERT INTO instructors (instructor_name, specialization) VALUES ($1, $2)';
             values = [entry.instructor_name, entry.specialization];
         } else if (targetType === 'students') {
@@ -46,10 +49,13 @@ const create = async (req, res, targetType) => {
                 res.status(400).send('Bad Request.');
                 return;
             }
+
             query = 'INSERT INTO students (student_name, instructor_id) VALUES ($1, $2)';
             values = [entry.student_name, entry.instructor_id];
         }
+
         const result = await pool.query(query, values);
+
         res.json(result.rows);
     } catch (error) {
         console.error(error);

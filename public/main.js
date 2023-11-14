@@ -26,7 +26,7 @@ function clearList(list){
 }
 
 function formatInstructors(item){
-    return `Name: ${item.instructor_name} | Specializes in: ${item.specialization}`;
+    return `Instructor ID: ${item.instructor_id} | Name: ${item.instructor_name} | Specializes in: ${item.specialization}`;
 }
 
 function formatStudents(item){
@@ -111,6 +111,9 @@ function addEntry(targetType) {
         jsonData[key] = value;
     });
 
+    // Ensure the form data includes the targetType
+    jsonData['targetType'] = targetType;
+
     // Determine endpoint based on the form
     const endpoint = targetType === 'students' ? '/students' : '/instructors';
 
@@ -135,9 +138,11 @@ function addEntry(targetType) {
         })
         .catch((error) => {
             console.error(error);
-            alert('Failed to add entry. Please try again later.');
+            alert(`Failed to add entry: ${error.message}`);
         });
 }
+
+
 
 
 setUp();
