@@ -39,7 +39,6 @@ const create = async (req, res, targetType) => {
                 res.status(400).send('Bad Request.');
                 return;
             }
-
             query = 'INSERT INTO instructors (instructor_name, specialization) VALUES ($1, $2)';
             values = [entry.instructor_name, entry.specialization];
         } else if (targetType === 'students') {
@@ -47,15 +46,10 @@ const create = async (req, res, targetType) => {
                 res.status(400).send('Bad Request.');
                 return;
             }
-
             query = 'INSERT INTO students (student_name, instructor_id) VALUES ($1, $2)';
             values = [entry.student_name, entry.instructor_id];
         }
-
-        // Execute the correct query based on targetType
         const result = await pool.query(query, values);
-
-        // Send the result back to the client
         res.json(result.rows);
     } catch (error) {
         console.error(error);
