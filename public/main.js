@@ -1,7 +1,8 @@
 const btns = document.querySelectorAll('.btn');
 const instructorsList = document.getElementById('instructorsList');
 const studentsList = document.getElementById('studentsList');
-const addEntryForm = document.getElementById('addEntryForm');
+const addInstructorForm = document.getElementById('addInstructorForm');
+const addStudentForm = document.getElementById('addStudentForm')
 
 function setUp(){
     loadEventListeners()
@@ -42,17 +43,62 @@ function createDeleteButton(index, targetType) {
     return button;
 }
 
-function appendToList(list, data, targetType){
-    data.forEach((item)=> {
-        const li = document.createElement('li');
-        li.textContent = targetType === 'instructors' ? formatInstructors(item) : formatStudents(item);
-        const deleteButton = createDeleteButton(item.instructor_id, targetType); 
-        list.appendChild(li);
-        list.appendChild(deleteButton);
-    })
+function createEditButton(item, targetType) {
+    const button = document.createElement('button');
+    button.textContent = 'Edit';
+    button.addEventListener('click', function() {
+        // const id = targetType === 'instructors' ? item.instructor_id : item.student_id;
+        editEntry(item, targetType);
+    });
+    return button;
 }
 
+function appendToList(list, data, targetType) {
+    data.forEach((item) => {
+        const li = document.createElement('li');
+        li.textContent = targetType === 'instructors' ? formatInstructors(item) : formatStudents(item);
+        
+        const deleteButton = createDeleteButton(item.instructor_id, targetType);
+        const editButton = createEditButton(targetType === 'instructors' ? item.instructor_id : item.instructor_id, targetType);
+        
+        li.appendChild(deleteButton);
+        li.appendChild(editButton);
+        
+        list.appendChild(li);
+    });
+}
 
+function editEntry(index, targetType) {
+    const baseUrl = window.location.origin;
+    const endpoint = targetType === 'instructors' ? '/instructors' : '/students';
+    const editForm = targetType === 'instructors' ? addInstructorForm : addStudentForm;
+    const formData = new FormData(editForm);
+    const jsonData = {};
+    formData.forEach((value, key) => {
+        jsonData[key] = value;
+    });
+    fetch(`${baseUrl}${endpoint}/${index}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(jsonData),
+    })
+        .then((response) => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error(`Failed to edit entry: ${response.statusText}`);
+            }
+        })
+        .then((data) => {
+            handleClick(targetType);
+        })
+        .catch((error) => {
+            console.error(error);
+            alert(`Failed to edit entry: ${error.message}`);
+        });
+}
 
 function handleClick(id){
     console.log(id)
@@ -60,17 +106,15 @@ function handleClick(id){
     const endpoint = id === 'instructors' ? '/instructors' : '/students';
     const targetList = id === 'instructors' ? instructorsList : studentsList;
     const otherList = id === 'instructors' ? studentsList : instructorsList;
-  
     clearList(targetList);
-
     fetch(`${baseUrl}${endpoint}`)
-        .then((response)=>response.json())
-        .then((data)=>{
+        .then((response) => response.json())
+        .then((data) => {
             appendToList(targetList, data, id === 'instructors' ? 'instructors' : 'students');
         })
-        .catch((error)=>{
+        .catch((error) => {
             console.error(error);
-        })
+        });
     clearList(otherList);
 }
 
@@ -101,23 +145,19 @@ function deleteRequest(index, targetType) {
             res.status(500).json({ error: 'Failed to delete entry' });
         });
 }
-function addEntry(targetType) {
-    // Get form data
-    const formData = new FormData(document.getElementById('addEntryForm'));
 
-    // Convert formData to JSON
+function addEntry(targetType) {
+    const studentData = new FormData(document.getElementById('addStudentForm'));
+    const instructorData = new FormData(document.getElementById('addInstructorForm'));
     const jsonData = {};
+
+    const formData = targetType === 'students' ? studentData : instructorData;
+
     formData.forEach((value, key) => {
         jsonData[key] = value;
     });
-
-    // Ensure the form data includes the targetType
     jsonData['targetType'] = targetType;
-
-    // Determine endpoint based on the form
     const endpoint = targetType === 'students' ? '/students' : '/instructors';
-
-    // Make a POST request to add the entry
     fetch(`${window.location.origin}${endpoint}`, {
         method: 'POST',
         headers: {
@@ -133,7 +173,6 @@ function addEntry(targetType) {
             }
         })
         .then((data) => {
-            // Refresh the list after adding the entry
             handleClick(targetType);
         })
         .catch((error) => {
